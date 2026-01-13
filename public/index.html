@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Estadísticas de Cotizaciones</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <style>
+        body {
+            background: #0d1117;
+            color: #ffffff;
+        }
+
+        .card {
+            border-radius: 12px;
+        }
+
+        .select2-container--default .select2-selection--multiple {
+            min-height: 38px;
+            padding: 4px 8px;
+            border-radius: 0.375rem;
+            border: 1px solid #ced4da;
+            background-color: #212529;
+            display: flex;
+            align-items: center;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #ffc107;
+            border: none;
+            color: #000;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: #000;
+            margin-right: 4px;
+        }
+
+        .select2-dropdown {
+            background-color: #212529;
+            color: #fff;
+        }
+    </style>
+
+
+</head>
+
+<body>
+    <div class="container py-5">
+
+        <h1 class="text-center mb-4">📊 Estadísticas de Cotizaciones por Usuario</h1>
+
+        <!-- FORMULARIO -->
+        <div class="card bg-secondary p-4 shadow-lg mb-4">
+            <div class="row g-3">
+
+                <!-- USUARIOS -->
+                <div class="col-md-3">
+                    <label class="form-label">Usuarios</label>
+                    <select id="usuarios" class="form-select" multiple></select>
+                    <div class="form-text text-light">
+                        Puedes buscar y seleccionar varios usuarios
+                    </div>
+                </div>
+
+
+
+                <!-- FILTRO -->
+                <div class="col-md-3">
+                    <label class="form-label">Filtro de fecha</label>
+                    <select id="filtro" class="form-select">
+                        <option value="dia">Hoy</option>
+                        <option value="semana">Esta semana</option>
+                        <option value="mes">Este mes</option>
+                        <option value="personalizado">Personalizado</option>
+                    </select>
+                </div>
+
+                <!-- FECHAS -->
+                <div class="col-md-2">
+                    <label class="form-label">Desde</label>
+                    <input type="date" id="desde" class="form-control" disabled />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Hasta</label>
+                    <input type="date" id="hasta" class="form-control" disabled />
+                </div>
+
+                <!-- BOTÓN -->
+                <div class="col-md-2 d-flex flex-column">
+                    <label class="form-label invisible">Acción</label>
+                    <button id="btnBuscar" class="btn btn-warning w-100">
+                        Consultar estadísticas
+                    </button>
+                </div>
+
+
+            </div>
+        </div>
+
+        <!-- RESULTADOS -->
+        <div id="resultados"></div>
+
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        const USUARIOS = [
+            "carolina", "marly", "ana", "alex", "andres", "camilo.r", "aleja.u", "juan.h",
+            "jefferson.c", "shara.c", "laura.c", "manuela.f", "mariadelmar.s", "juan.r",
+            "johanna.c", "manuela.s", "leandro.b", "jennifer.h", "catalina.g", "juliana.v",
+            "melissa.u", "angelica.p", "joha.g", "joan.o", "manuel.f", "cristian.m",
+            "alexandra.c", "erika.v", "camila.m", "ingrid.p", "ana.a", "manuela.j",
+            "yurany.g", "mariana.q"
+        ];
+
+        // Inicializar Select2
+        $(document).ready(function () {
+            $("#usuarios").select2({
+
+                width: "100%"
+            });
+
+
+
+            USUARIOS.forEach(u => {
+                const option = new Option(u, u, false, false);
+                $("#usuarios").append(option);
+            });
+        });
+
+        const filtroSelect = document.getElementById("filtro");
+        const desdeInput = document.getElementById("desde");
+        const hastaInput = document.getElementById("hasta");
+        const resultados = document.getElementById("resultados");
+
+        filtroSelect.addEventListener("change", () => {
+            const personalizado = filtroSelect.value === "personalizado";
+            desdeInput.disabled = !personalizado;
+            hastaInput.disabled = !personalizado;
+        });
+
+        document.getElementById("btnBuscar").addEventListener("click", async () => {
+            const filtro = filtroSelect.value;
+            const desde = desdeInput.value;
+            const hasta = hastaInput.value;
+            const usuarios = $("#usuarios").val(); // ARRAY
+
+            resultados.innerHTML = `
+        <div class="text-center mt-4">
+          <div class="spinner-border text-warning"></div>
+          <p class="mt-2">Consultando estadísticas...</p>
+        </div>
+      `;
+
+            try {
+                const body = { filtro, usuarios };
+
+                if (filtro === "personalizado") {
+                    if (!desde || !hasta) {
+                        alert("Debes seleccionar fecha desde y hasta");
+                        return;
+                    }
+                    body.desde = desde;
+                    body.hasta = hasta;
+                }
+
+                const res = await fetch("/api/cotizaciones", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await res.json();
+
+                if (!data.resultados || data.resultados.length === 0) {
+                    resultados.innerHTML = `
+            <div class="alert alert-danger text-center">
+              No se encontraron cotizaciones en este rango.
+            </div>
+          `;
+                    return;
+                }
+
+                let html = `
+          <div class="card bg-secondary p-4 shadow">
+            <h4 class="mb-3">Resultados</h4>
+            <table class="table table-dark table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  <th>Total cotizaciones</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+                data.resultados.forEach(row => {
+                    html += `
+            <tr>
+              <td>${row.usuario}</td>
+              <td class="text-center fw-bold">${row.total}</td>
+            </tr>
+          `;
+                });
+
+                html += `
+              </tbody>
+            </table>
+          </div>
+        `;
+
+                resultados.innerHTML = html;
+
+            } catch (error) {
+                resultados.innerHTML = `
+          <div class="alert alert-danger">
+            Error consultando API: ${error.message}
+          </div>
+        `;
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+
+</body>
+
+</html>
