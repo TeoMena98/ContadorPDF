@@ -141,6 +141,16 @@ async function obtenerPDFs(folderId) {
 }
 
 
+const USUARIOS = [
+  "carolina", "marly", "ana", "alex", "andres", "camilo.r", "aleja.u", "juan.h",
+  "jefferson.c", "shara.c", "laura.c", "manuela.f", "mariadelmar.s", "juan.r",
+  "johanna.c", "manuela.s", "leandro.b", "jennifer.h", "catalina.g", "juliana.v",
+  "melissa.u", "angelica.p", "joha.g", "joan.o", "manuel.f", "cristian.m",
+  "alexandra.c", "erika.v", "camila.m", "ingrid.p", "ana.a", "manuela.j",
+  "yurany.g", "mariana.q"
+];
+
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método no permitido" });
@@ -167,8 +177,19 @@ export default async function handler(req, res) {
     }
 
     const mapaResultados = {};
-
+    if (tipoBusqueda === "usuario") {
+      for (const usuario of USUARIOS) {
+        mapaResultados[usuario] = 0;
+      }
+    }
     for (const carpeta of carpetas) {
+      const nombreUsuario = carpeta.name.toLowerCase().trim();
+
+      // Si la carpeta no es de un usuario válido, saltar
+      if (tipoBusqueda === "usuario" && !USUARIOS.includes(nombreUsuario)) {
+        continue;
+      }
+
       const pdfs = await obtenerPDFs(carpeta.id);
 
       const pdfsFiltrados = pdfs.filter(pdf =>
@@ -176,13 +197,12 @@ export default async function handler(req, res) {
       );
 
       for (const pdf of pdfsFiltrados) {
-        let clave = carpeta.name; // por defecto usuario
+        let clave = nombreUsuario;
 
         if (tipoBusqueda === "destino") {
           const destino = obtenerDestinoDesdeNombre(pdf.name);
           if (!destino) continue;
 
-          // Si hay filtro de destinos seleccionados
           if (Array.isArray(busqueda) && busqueda.length > 0) {
             if (!busqueda.map(d => d.toLowerCase()).includes(destino)) {
               continue;
