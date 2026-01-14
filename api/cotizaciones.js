@@ -7,6 +7,22 @@ function convertirABogota(fechaISO) {
   return new Date(fechaUTC.getTime() + TZ_OFFSET * 60 * 60 * 1000);
 }
 
+function obtenerClaveCotizacion(nombre) {
+  let limpio = nombre.replace(".pdf", "").toLowerCase().trim();
+
+  if (!limpio.startsWith("cotizacion")) return null;
+
+  // Quitar con guia / sin guia
+  limpio = limpio.replace(" con guia", "");
+  limpio = limpio.replace(" sin guia", "");
+
+  // Normalizar espacios
+  limpio = limpio.replace(/\s+/g, " ").trim();
+
+  return limpio;
+}
+
+
 function obtenerDestinoDesdeNombre(nombre) {
   const limpio = nombre.replace(".pdf", "").trim().toLowerCase();
 
@@ -177,11 +193,14 @@ export default async function handler(req, res) {
     }
 
     const mapaResultados = {};
+
     if (tipoBusqueda === "usuario") {
       for (const usuario of USUARIOS) {
         mapaResultados[usuario] = 0;
       }
     }
+
+    // ===== RECORRER CARPETAS UNA SOLA VEZ =====
     for (const carpeta of carpetas) {
       const nombreUsuario = carpeta.name.toLowerCase().trim();
 
@@ -196,10 +215,23 @@ export default async function handler(req, res) {
         fechaDentroDeRango(pdf.createdTime, fechaDesde, fechaHasta)
       );
 
-      for (const pdf of pdfsFiltrados) {
-        let clave = nombreUsuario;
+      // ===== CONTAR POR USUARIO (DEDUPLICADO) =====
+      if (tipoBusqueda === "usuario") {
+        const cotizacionesUnicas = new Set();
 
-        if (tipoBusqueda === "destino") {
+        for (const pdf of pdfsFiltrados) {
+          const claveCotizacion = obtenerClaveCotizacion(pdf.name);
+          if (!claveCotizacion) continue;
+
+          cotizacionesUnicas.add(claveCotizacion);
+        }
+
+        mapaResultados[nombreUsuario] += cotizacionesUnicas.size;
+      }
+
+      // ===== CONTAR POR DESTINO =====
+      if (tipoBusqueda === "destino") {
+        for (const pdf of pdfsFiltrados) {
           const destino = obtenerDestinoDesdeNombre(pdf.name);
           if (!destino) continue;
 
@@ -209,14 +241,12 @@ export default async function handler(req, res) {
             }
           }
 
-          clave = destino;
-        }
+          if (!mapaResultados[destino]) {
+            mapaResultados[destino] = 0;
+          }
 
-        if (!mapaResultados[clave]) {
-          mapaResultados[clave] = 0;
+          mapaResultados[destino]++;
         }
-
-        mapaResultados[clave]++;
       }
     }
 
