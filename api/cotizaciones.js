@@ -230,7 +230,11 @@ export default async function handler(req, res) {
       }
 
       // ===== CONTAR POR DESTINO =====
+      // ===== CONTAR POR DESTINO (DEDUPLICADO) =====
       if (tipoBusqueda === "destino") {
+
+        const cotizacionesPorDestino = {};
+
         for (const pdf of pdfsFiltrados) {
           const destino = obtenerDestinoDesdeNombre(pdf.name);
           if (!destino) continue;
@@ -241,13 +245,26 @@ export default async function handler(req, res) {
             }
           }
 
+          const claveCotizacion = obtenerClaveCotizacion(pdf.name);
+          if (!claveCotizacion) continue;
+
+          if (!cotizacionesPorDestino[destino]) {
+            cotizacionesPorDestino[destino] = new Set();
+          }
+
+          cotizacionesPorDestino[destino].add(claveCotizacion);
+        }
+
+        // Sumar resultados finales
+        for (const destino in cotizacionesPorDestino) {
           if (!mapaResultados[destino]) {
             mapaResultados[destino] = 0;
           }
 
-          mapaResultados[destino]++;
+          mapaResultados[destino] += cotizacionesPorDestino[destino].size;
         }
       }
+
     }
 
 
