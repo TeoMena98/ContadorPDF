@@ -149,6 +149,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
+        let datosGlobales = [];
         const USUARIOS = [
             "carolina", "marly", "ana", "alex", "andres", "camilo.r", "aleja.u", "juan.h",
             "jefferson.c", "shara.c", "laura.c", "manuela.f", "mariadelmar.s", "juan.r",
@@ -229,7 +230,11 @@
   `;
 
             try {
-                const body = { filtro, busqueda, tipoBusqueda };
+                const body = { filtro, tipoBusqueda };
+
+                if (tipoBusqueda === "usuario") {
+                    body.busqueda = busqueda;
+                }
 
                 if (filtro === "personalizado") {
                     if (!desde || !hasta) {
@@ -250,72 +255,75 @@
 
                 if (!data.resultados || data.resultados.length === 0) {
                     resultados.innerHTML = `
-        <div class="alert alert-danger text-center">
-          No se encontraron cotizaciones en este rango.
-        </div>
-      `;
+            <div class="alert alert-danger text-center">
+                No se encontraron cotizaciones en este rango.
+            </div>
+        `;
                     return;
                 }
 
-                const orden = document.getElementById("orden").value;
+                // Guardamos los datos globales
+                datosGlobales = data.resultados;
 
-                let resultadosOrdenados = [...data.resultados];
+                // Renderizamos tabla según el orden seleccionado
+                renderTabla();
 
-                // Aplicar orden
-                if (orden === "total_desc") {
-                    resultadosOrdenados.sort((a, b) => b.total - a.total);
-                }
-                if (orden === "total_asc") {
-                    resultadosOrdenados.sort((a, b) => a.total - b.total);
-                }
-                if (orden === "nombre_asc") {
-                    resultadosOrdenados.sort((a, b) => a.usuario.localeCompare(b.usuario));
-                }
-                if (orden === "nombre_desc") {
-                    resultadosOrdenados.sort((a, b) => b.usuario.localeCompare(a.usuario));
-                }
-
-                const nombreColumna = tipoBusqueda === "destino" ? "Destino" : "Usuario";
-
-                let html = `
-  <div class="card bg-secondary p-4 shadow">
-    <h4 class="mb-3">Resultados</h4>
-    <table class="table table-dark table-striped table-bordered">
-      <thead>
-        <tr>
-          <th>${nombreColumna}</th>
-          <th>Total cotizaciones</th>
-        </tr>
-      </thead>
-      <tbody>
-`;
+            } catch (error) {
+                resultados.innerHTML = `
+        <div class="alert alert-danger">
+            Error consultando API: ${error.message}
+        </div>
+    `;
+            }
 
 
-                data.resultados.forEach(row => {
-                    html += `
-        <tr>
-          <td>${row.usuario}</td>
-          <td class="text-center fw-bold">${row.total}</td>
-        </tr>
-      `;
-                });
 
+
+        });
+        function renderTabla() {
+            const orden = document.getElementById("orden").value;
+            const tipoBusqueda = document.getElementById("tipoBusqueda").value;
+
+            let resultadosOrdenados = [...datosGlobales];
+
+            if (orden === "total_desc") resultadosOrdenados.sort((a, b) => b.total - a.total);
+            if (orden === "total_asc") resultadosOrdenados.sort((a, b) => a.total - b.total);
+            if (orden === "nombre_asc") resultadosOrdenados.sort((a, b) => a.usuario.localeCompare(b.usuario));
+            if (orden === "nombre_desc") resultadosOrdenados.sort((a, b) => b.usuario.localeCompare(a.usuario));
+
+            const nombreColumna = tipoBusqueda === "destino" ? "Destino" : "Usuario";
+
+            let html = `
+      <div class="card bg-secondary p-4 shadow">
+        <h4 class="mb-3">Resultados</h4>
+        <table class="table table-dark table-striped table-bordered">
+          <thead>
+            <tr>
+              <th>${nombreColumna}</th>
+              <th>Total cotizaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+            resultadosOrdenados.forEach(row => {
                 html += `
+            <tr>
+              <td>${row.usuario}</td>
+              <td class="text-center fw-bold">${row.total}</td>
+            </tr>
+        `;
+            });
+
+            html += `
           </tbody>
         </table>
       </div>
     `;
 
-                resultados.innerHTML = html;
-
-            } catch (error) {
-                resultados.innerHTML = `
-      <div class="alert alert-danger">
-        Error consultando API: ${error.message}
-      </div>
-    `;
-            }
-        });
+            resultados.innerHTML = html;
+        }
+        document.getElementById("orden").addEventListener("change", renderTabla);
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
