@@ -8,20 +8,27 @@ function convertirABogota(fechaISO) {
 }
 
 function obtenerDestinoDesdeNombre(nombre) {
-  // Quitar .pdf si existe
   const limpio = nombre.replace(".pdf", "").trim();
 
-  // Quitar "Cotizacion " del inicio
   if (!limpio.toLowerCase().startsWith("cotizacion")) return null;
 
-  const sinCotizacion = limpio.substring(10).trim(); // quita "Cotizacion"
+  // Quitar "Cotizacion"
+  const sinCotizacion = limpio.substring(10).trim();
 
   // Cortar antes de MDE_, BOG_, etc
   const partes = sinCotizacion.split("_");
-  const destinoCompleto = partes[0].trim(); // "Punta Cana"
+  let destino = partes[0].trim().toLowerCase();
 
-  return destinoCompleto.toLowerCase();
+  // Normalizar destinos especiales
+  destino = destino.replace(" con guia", "");
+  destino = destino.replace(" sin guia", "");
+
+  // Limpiar espacios dobles
+  destino = destino.replace(/\s+/g, " ").trim();
+
+  return destino;
 }
+
 
 
 
