@@ -9,17 +9,30 @@ function obtenerRangoFechas(filtro, desdeCustom, hastaCustom) {
   const hoy = new Date();
   let desde, hasta;
 
-  if (filtro === "dia") {
-    desde = new Date();
+  // Hoy
+  if (filtro === "hoy") {
+    desde = new Date(hoy);
     desde.setHours(0, 0, 0, 0);
-    hasta = new Date();
+
+    hasta = new Date(hoy);
     hasta.setHours(23, 59, 59, 999);
   }
 
-  if (filtro === "semana") {
-    const diaSemana = hoy.getDay();
+  // Ayer
+  if (filtro === "ayer") {
     desde = new Date(hoy);
-    desde.setDate(hoy.getDate() - diaSemana);
+    desde.setDate(hoy.getDate() - 1);
+    desde.setHours(0, 0, 0, 0);
+
+    hasta = new Date(desde);
+    hasta.setHours(23, 59, 59, 999);
+  }
+
+  // Esta semana (lunes a domingo)
+  if (filtro === "semana") {
+    const dia = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1; // lunes = 0
+    desde = new Date(hoy);
+    desde.setDate(hoy.getDate() - dia);
     desde.setHours(0, 0, 0, 0);
 
     hasta = new Date(desde);
@@ -27,18 +40,34 @@ function obtenerRangoFechas(filtro, desdeCustom, hastaCustom) {
     hasta.setHours(23, 59, 59, 999);
   }
 
-  if (filtro === "mes") {
-    desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    hasta = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59);
+  // Semana pasada
+  if (filtro === "semana_pasada") {
+    const dia = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1;
+    desde = new Date(hoy);
+    desde.setDate(hoy.getDate() - dia - 7);
+    desde.setHours(0, 0, 0, 0);
+
+    hasta = new Date(desde);
+    hasta.setDate(desde.getDate() + 6);
+    hasta.setHours(23, 59, 59, 999);
   }
 
+  // Este mes
+  if (filtro === "mes") {
+    desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1, 0, 0, 0);
+    hasta = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59, 999);
+  }
+
+  // Personalizado
   if (filtro === "personalizado") {
     desde = new Date(desdeCustom);
     hasta = new Date(hastaCustom);
+    hasta.setHours(23, 59, 59, 999);
   }
 
   return { desde, hasta };
 }
+
 
 async function obtenerSubcarpetas(folderId) {
   const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id,name)&key=${process.env.GOOGLE_API_KEY}`;
