@@ -26,7 +26,7 @@
             padding: 4px 8px;
             border-radius: 0.375rem;
             border: 1px solid #ced4da;
-            background-color: #212529;
+            background-color: #ffffff;
             display: flex;
             align-items: center;
         }
@@ -68,20 +68,29 @@
         <!-- FORMULARIO -->
         <div class="card bg-secondary p-4 shadow-lg mb-4">
             <div class="row g-3">
+                <!-- TIPO DE FILTRO -->
+                <div class="col-md-2">
+                    <label class="form-label">Buscar por</label>
+                    <select id="tipoBusqueda" class="form-select">
+                        <option value="usuario">Usuario</option>
+                        <option value="destino">Destino</option>
+                    </select>
+                </div>
 
                 <!-- USUARIOS -->
-                <div class="col-md-3">
-                    <label class="form-label">Usuarios</label>
-                    <select id="usuarios" class="form-select" multiple></select>
+                <div class="col-md-4">
+                    <label class="form-label" id="labelBusqueda">Usuarios</label>
+                    <select id="busqueda" class="form-select" multiple></select>
                     <div class="form-text text-light">
-                        Puedes buscar y seleccionar varios usuarios
+                        Puedes buscar y seleccionar varios
                     </div>
                 </div>
 
 
 
+
                 <!-- FILTRO -->
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label">Filtro de fecha</label>
                     <select id="filtro" class="form-select">
                         <option value="hoy">Hoy</option>
@@ -106,14 +115,15 @@
                 </div>
 
                 <!-- BOTÓN -->
-                <div class="col-md-2 d-flex flex-column">
-                    <label class="form-label invisible">Acción</label>
-                    <button id="btnBuscar" class="btn btn-warning w-100">
-                        Consultar estadísticas
-                    </button>
-                </div>
 
 
+
+            </div>
+            <div class="col-md-12 d-flex flex-column">
+                <label class="form-label invisible">Acción</label>
+                <button id="btnBuscar" class="btn btn-warning w-100">
+                    Consultar estadísticas
+                </button>
             </div>
         </div>
 
@@ -136,20 +146,50 @@
             "yurany.g", "mariana.q"
         ];
 
-        // Inicializar Select2
         $(document).ready(function () {
-            $("#usuarios").select2({
+            $("#busqueda").select2({ width: "100%" });
+            $("#busqueda").prop("disabled", false);
+            cargarUsuarios();
+        });
 
-                width: "100%"
-            });
 
-
-
+        function cargarUsuarios() {
+            $("#busqueda").empty();
             USUARIOS.forEach(u => {
                 const option = new Option(u, u, false, false);
-                $("#usuarios").append(option);
+                $("#busqueda").append(option);
             });
+        }
+
+        const tipoBusqueda = document.getElementById("tipoBusqueda");
+        const labelBusqueda = document.getElementById("labelBusqueda");
+
+        tipoBusqueda.addEventListener("change", async () => {
+            const tipo = tipoBusqueda.value;
+
+            if (tipo === "usuario") {
+                labelBusqueda.innerText = "Usuarios";
+                $("#busqueda").prop("disabled", false);   // habilitar
+                cargarUsuarios();
+            }
+
+            if (tipo === "destino") {
+                labelBusqueda.innerText = "Destinos";
+
+                // Deshabilitar select
+                $("#busqueda").prop("disabled", true);
+
+                // Limpiar selección (no hace falta usarla)
+                $("#busqueda").empty();
+
+                // Opcional: mostrar texto informativo
+           
+
+                $("#busqueda").trigger("change");
+            }
         });
+
+
 
         const filtroSelect = document.getElementById("filtro");
         const desdeInput = document.getElementById("desde");
@@ -166,17 +206,18 @@
             const filtro = filtroSelect.value;
             const desde = desdeInput.value;
             const hasta = hastaInput.value;
-            const usuarios = $("#usuarios").val(); // ARRAY
+            const busqueda = $("#busqueda").val();
+            const tipoBusqueda = document.getElementById("tipoBusqueda").value;
 
             resultados.innerHTML = `
-        <div class="text-center mt-4">
-          <div class="spinner-border text-warning"></div>
-          <p class="mt-2">Consultando estadísticas...</p>
-        </div>
-      `;
+    <div class="text-center mt-4">
+      <div class="spinner-border text-warning"></div>
+      <p class="mt-2">Consultando estadísticas...</p>
+    </div>
+  `;
 
             try {
-                const body = { filtro, usuarios };
+                const body = { filtro, busqueda, tipoBusqueda };
 
                 if (filtro === "personalizado") {
                     if (!desde || !hasta) {
@@ -197,52 +238,53 @@
 
                 if (!data.resultados || data.resultados.length === 0) {
                     resultados.innerHTML = `
-            <div class="alert alert-danger text-center">
-              No se encontraron cotizaciones en este rango.
-            </div>
-          `;
+        <div class="alert alert-danger text-center">
+          No se encontraron cotizaciones en este rango.
+        </div>
+      `;
                     return;
                 }
 
                 let html = `
-          <div class="card bg-secondary p-4 shadow">
-            <h4 class="mb-3">Resultados</h4>
-            <table class="table table-dark table-striped table-bordered">
-              <thead>
-                <tr>
-                  <th>Usuario</th>
-                  <th>Total cotizaciones</th>
-                </tr>
-              </thead>
-              <tbody>
-        `;
+      <div class="card bg-secondary p-4 shadow">
+        <h4 class="mb-3">Resultados</h4>
+        <table class="table table-dark table-striped table-bordered">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Total cotizaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
 
                 data.resultados.forEach(row => {
                     html += `
-            <tr>
-              <td>${row.usuario}</td>
-              <td class="text-center fw-bold">${row.total}</td>
-            </tr>
-          `;
+        <tr>
+          <td>${row.usuario}</td>
+          <td class="text-center fw-bold">${row.total}</td>
+        </tr>
+      `;
                 });
 
                 html += `
-              </tbody>
-            </table>
-          </div>
-        `;
+          </tbody>
+        </table>
+      </div>
+    `;
 
                 resultados.innerHTML = html;
 
             } catch (error) {
                 resultados.innerHTML = `
-          <div class="alert alert-danger">
-            Error consultando API: ${error.message}
-          </div>
-        `;
+      <div class="alert alert-danger">
+        Error consultando API: ${error.message}
+      </div>
+    `;
             }
         });
     </script>
+
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
