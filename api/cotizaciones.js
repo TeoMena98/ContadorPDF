@@ -92,7 +92,7 @@ export default async function handler(req, res) {
   }
 
   const folderIdRaiz = "1HL5lFce29wBN17LAEv3ACvczRPb4aV5m";
-  const { filtro, desde, hasta, usuarios } = req.body;
+  const { filtro, desde, hasta, busqueda, tipoBusqueda } = req.body;
 
   try {
     const { desde: fechaDesde, hasta: fechaHasta } = obtenerRangoFechas(
@@ -103,8 +103,9 @@ export default async function handler(req, res) {
 
     let carpetas = await obtenerSubcarpetas(folderIdRaiz);
 
-    if (Array.isArray(usuarios) && usuarios.length > 0) {
-      const seleccionados = usuarios.map(u => u.toLowerCase());
+    // Solo filtrar si es por usuario
+    if (tipoBusqueda === "usuario" && Array.isArray(busqueda) && busqueda.length > 0) {
+      const seleccionados = busqueda.map(u => u.toLowerCase());
       carpetas = carpetas.filter(c =>
         seleccionados.includes(c.name.toLowerCase())
       );
