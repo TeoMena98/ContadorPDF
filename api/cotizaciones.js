@@ -8,14 +8,21 @@ function convertirABogota(fechaISO) {
 }
 
 function obtenerDestinoDesdeNombre(nombre) {
-  // Ejemplo: "Cotizacion - Cancun - Juan.pdf"
-  // Ajusta esto según tu formato real
-  const partes = nombre.split("-");
-  if (partes.length >= 2) {
-    return partes[1].trim().toLowerCase();
-  }
-  return null;
+  // Quitar .pdf si existe
+  const limpio = nombre.replace(".pdf", "").trim();
+
+  // Quitar "Cotizacion " del inicio
+  if (!limpio.toLowerCase().startsWith("cotizacion")) return null;
+
+  const sinCotizacion = limpio.substring(10).trim(); // quita "Cotizacion"
+
+  // Cortar antes de MDE_, BOG_, etc
+  const partes = sinCotizacion.split("_");
+  const destinoCompleto = partes[0].trim(); // "Punta Cana"
+
+  return destinoCompleto.toLowerCase();
 }
+
 
 
 function fechaDentroDeRango(fechaISO, desde, hasta) {
