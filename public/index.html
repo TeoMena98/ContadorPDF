@@ -139,7 +139,7 @@
                 </select>
             </div>
         </div>
-        
+
 
         <div id="resultados"></div>
 
@@ -295,6 +295,8 @@
 
             const nombreColumna = tipoBusqueda === "destino" ? "Destino" : "Usuario";
 
+            let totalGeneral = 0;
+
             let html = `
       <div class="card bg-secondary p-4 shadow">
         <h4 class="mb-3">Resultados</h4>
@@ -309,6 +311,8 @@
     `;
 
             resultadosOrdenados.forEach(row => {
+                totalGeneral += row.total;
+
                 html += `
             <tr>
               <td>${row.usuario}</td>
@@ -316,6 +320,14 @@
             </tr>
         `;
             });
+
+            // Fila TOTAL
+            html += `
+        <tr class="table-warning text-dark fw-bold">
+            <td class="text-end">TOTAL</td>
+            <td class="text-center">${totalGeneral}</td>
+        </tr>
+    `;
 
             html += `
           </tbody>
@@ -325,6 +337,7 @@
 
             resultados.innerHTML = html;
         }
+
         document.getElementById("orden").addEventListener("change", renderTabla);
     </script>
 
