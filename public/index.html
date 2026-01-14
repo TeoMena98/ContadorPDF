@@ -128,6 +128,18 @@
         </div>
 
         <!-- RESULTADOS -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label class="form-label">Ordenar resultados</label>
+                <select id="orden" class="form-select">
+                    <option value="total_desc">Total cotizaciones (Mayor a menor)</option>
+                    <option value="total_asc">Total cotizaciones (Menor a mayor)</option>
+                    <option value="nombre_asc">Nombre (A → Z)</option>
+                    <option value="nombre_desc">Nombre (Z → A)</option>
+                </select>
+            </div>
+        </div>
+
         <div id="resultados"></div>
 
     </div>
@@ -183,7 +195,7 @@
                 $("#busqueda").empty();
 
                 // Opcional: mostrar texto informativo
-           
+
 
                 $("#busqueda").trigger("change");
             }
@@ -245,18 +257,39 @@
                     return;
                 }
 
+                const orden = document.getElementById("orden").value;
+
+                let resultadosOrdenados = [...data.resultados];
+
+                // Aplicar orden
+                if (orden === "total_desc") {
+                    resultadosOrdenados.sort((a, b) => b.total - a.total);
+                }
+                if (orden === "total_asc") {
+                    resultadosOrdenados.sort((a, b) => a.total - b.total);
+                }
+                if (orden === "nombre_asc") {
+                    resultadosOrdenados.sort((a, b) => a.usuario.localeCompare(b.usuario));
+                }
+                if (orden === "nombre_desc") {
+                    resultadosOrdenados.sort((a, b) => b.usuario.localeCompare(a.usuario));
+                }
+
+                const nombreColumna = tipoBusqueda === "destino" ? "Destino" : "Usuario";
+
                 let html = `
-      <div class="card bg-secondary p-4 shadow">
-        <h4 class="mb-3">Resultados</h4>
-        <table class="table table-dark table-striped table-bordered">
-          <thead>
-            <tr>
-              <th>Usuario</th>
-              <th>Total cotizaciones</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
+  <div class="card bg-secondary p-4 shadow">
+    <h4 class="mb-3">Resultados</h4>
+    <table class="table table-dark table-striped table-bordered">
+      <thead>
+        <tr>
+          <th>${nombreColumna}</th>
+          <th>Total cotizaciones</th>
+        </tr>
+      </thead>
+      <tbody>
+`;
+
 
                 data.resultados.forEach(row => {
                     html += `
