@@ -128,7 +128,7 @@
         </div>
 
         <!-- RESULTADOS -->
-        <div class="row mb-3">
+        <div class="row mb-12 d-none" id="bloqueOrden">
             <div class="col-md-4">
                 <label class="form-label">Ordenar resultados</label>
                 <select id="orden" class="form-select">
@@ -139,6 +139,7 @@
                 </select>
             </div>
         </div>
+        >
 
         <div id="resultados"></div>
 
@@ -259,14 +260,15 @@
                 No se encontraron cotizaciones en este rango.
             </div>
         `;
+                    document.getElementById("bloqueOrden").classList.add("d-none");
                     return;
                 }
 
                 // Guardamos los datos globales
                 datosGlobales = data.resultados;
-
-                // Renderizamos tabla según el orden seleccionado
+                document.getElementById("bloqueOrden").classList.remove("d-none");
                 renderTabla();
+
 
             } catch (error) {
                 resultados.innerHTML = `
