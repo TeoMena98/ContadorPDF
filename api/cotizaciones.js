@@ -116,12 +116,30 @@ async function obtenerSubcarpetas(folderId) {
 }
 
 async function obtenerPDFs(folderId) {
-  const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents and mimeType='application/pdf' and trashed=false&fields=files(id,name,createdTime)&key=${process.env.GOOGLE_API_KEY}`;
-  const resp = await fetch(url);
-  const data = await resp.json();
-  if (!resp.ok) throw new Error(data.error?.message || "Error Google Drive");
-  return data.files || [];
+  let todos = [];
+  let pageToken = null;
+
+  do {
+    const url = new URL("https://www.googleapis.com/drive/v3/files");
+    url.searchParams.append("q", `'${folderId}' in parents and mimeType='application/pdf' and trashed=false`);
+    url.searchParams.append("fields", "nextPageToken, files(id,name,createdTime)");
+    url.searchParams.append("pageSize", "100");
+    if (pageToken) url.searchParams.append("pageToken", pageToken);
+    url.searchParams.append("key", process.env.GOOGLE_API_KEY);
+
+    const resp = await fetch(url.toString());
+    const data = await resp.json();
+
+    if (!resp.ok) throw new Error(data.error?.message || "Error Google Drive");
+
+    todos = todos.concat(data.files || []);
+    pageToken = data.nextPageToken;
+
+  } while (pageToken);
+
+  return todos;
 }
+
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
