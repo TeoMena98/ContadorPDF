@@ -7,6 +7,17 @@ function convertirABogota(fechaISO) {
   return new Date(fechaUTC.getTime() + TZ_OFFSET * 60 * 60 * 1000);
 }
 
+function obtenerDestinoDesdeNombre(nombre) {
+  // Ejemplo: "Cotizacion - Cancun - Juan.pdf"
+  // Ajusta esto según tu formato real
+  const partes = nombre.split("-");
+  if (partes.length >= 2) {
+    return partes[1].trim().toLowerCase();
+  }
+  return null;
+}
+
+
 function fechaDentroDeRango(fechaISO, desde, hasta) {
   const fechaBogota = convertirABogota(fechaISO);
   return fechaBogota >= desde && fechaBogota <= hasta;
@@ -120,18 +131,35 @@ export default async function handler(req, res) {
         fechaDentroDeRango(pdf.createdTime, fechaDesde, fechaHasta)
       );
 
-      const nombre = carpeta.name;
+      for (const pdf of pdfsFiltrados) {
+        let clave = carpeta.name; // por defecto usuario
 
-      if (!mapaResultados[nombre]) {
-        mapaResultados[nombre] = 0;
+        if (tipoBusqueda === "destino") {
+          const destino = obtenerDestinoDesdeNombre(pdf.name);
+          if (!destino) continue;
+
+          // Si hay filtro de destinos seleccionados
+          if (Array.isArray(busqueda) && busqueda.length > 0) {
+            if (!busqueda.map(d => d.toLowerCase()).includes(destino)) {
+              continue;
+            }
+          }
+
+          clave = destino;
+        }
+
+        if (!mapaResultados[clave]) {
+          mapaResultados[clave] = 0;
+        }
+
+        mapaResultados[clave]++;
       }
-
-      mapaResultados[nombre] += pdfsFiltrados.length;
     }
 
+
     // Convertir a array
-    const resultado = Object.entries(mapaResultados).map(([usuario, total]) => ({
-      usuario,
+    const resultado = Object.entries(mapaResultados).map(([nombre, total]) => ({
+      usuario: nombre,
       total
     }));
 
