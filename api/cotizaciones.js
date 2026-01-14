@@ -111,20 +111,30 @@ export default async function handler(req, res) {
       );
     }
 
-    const resultado = [];
+    const mapaResultados = {};
 
-    for (const usuario of carpetas) {
-      const pdfs = await obtenerPDFs(usuario.id);
+    for (const carpeta of carpetas) {
+      const pdfs = await obtenerPDFs(carpeta.id);
 
       const pdfsFiltrados = pdfs.filter(pdf =>
         fechaDentroDeRango(pdf.createdTime, fechaDesde, fechaHasta)
       );
 
-      resultado.push({
-        usuario: usuario.name,
-        total: pdfsFiltrados.length
-      });
+      const nombre = carpeta.name;
+
+      if (!mapaResultados[nombre]) {
+        mapaResultados[nombre] = 0;
+      }
+
+      mapaResultados[nombre] += pdfsFiltrados.length;
     }
+
+    // Convertir a array
+    const resultado = Object.entries(mapaResultados).map(([usuario, total]) => ({
+      usuario,
+      total
+    }));
+
 
     res.status(200).json({
       filtro,
