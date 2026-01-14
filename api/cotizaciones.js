@@ -8,26 +8,38 @@ function convertirABogota(fechaISO) {
 }
 
 function obtenerDestinoDesdeNombre(nombre) {
-  const limpio = nombre.replace(".pdf", "").trim();
+  const limpio = nombre.replace(".pdf", "").trim().toLowerCase();
 
-  if (!limpio.toLowerCase().startsWith("cotizacion")) return null;
+  if (!limpio.startsWith("cotizacion")) return null;
 
-  // Quitar "Cotizacion"
-  const sinCotizacion = limpio.substring(10).trim();
+  // Quitar "cotizacion"
+  let resto = limpio.replace("cotizacion", "").trim();
 
-  // Cortar antes de MDE_, BOG_, etc
-  const partes = sinCotizacion.split("_");
-  let destino = partes[0].trim().toLowerCase();
+  // Cortar antes del IATA (MDE_, BOG_, CLO_, etc)
+  const partes = resto.split("_");
+  const destinoConIata = partes[0].trim();
 
-  // Normalizar destinos especiales
+  // Separar palabras
+  const palabras = destinoConIata.split(" ");
+
+  // Quitar el último bloque si es un IATA (3 letras)
+  const posibleIata = palabras[palabras.length - 1];
+  if (/^[a-z]{3}$/i.test(posibleIata)) {
+    palabras.pop();
+  }
+
+  let destino = palabras.join(" ").trim();
+
+  // Normalizar casos especiales
   destino = destino.replace(" con guia", "");
   destino = destino.replace(" sin guia", "");
 
-  // Limpiar espacios dobles
+  // Limpiar espacios
   destino = destino.replace(/\s+/g, " ").trim();
 
   return destino;
 }
+
 
 
 
