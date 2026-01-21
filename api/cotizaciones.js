@@ -22,6 +22,16 @@ function obtenerClaveCotizacion(nombre) {
   return limpio;
 }
 
+function obtenerLunesBogota(fecha) {
+  const dia = fecha.getDay(); // 0=domingo, 1=lunes...
+  const diff = dia === 0 ? -6 : 1 - dia; // ajustar a lunes
+  const lunes = new Date(fecha);
+  lunes.setDate(fecha.getDate() + diff);
+  lunes.setHours(0, 0, 0, 0);
+  return lunes;
+}
+
+
 
 function obtenerDestinoDesdeNombre(nombre) {
   const limpio = nombre.replace(".pdf", "").trim().toLowerCase();
@@ -88,27 +98,23 @@ function obtenerRangoFechas(filtro, desdeCustom, hastaCustom) {
     hasta.setHours(23, 59, 59, 999);
   }
 
-  if (filtro === "semana") {
-    const dia = ahoraBogota.getDay() === 0 ? 6 : ahoraBogota.getDay() - 1;
-    desde = new Date(ahoraBogota);
-    desde.setDate(ahoraBogota.getDate() - dia);
-    desde.setHours(0, 0, 0, 0);
+if (filtro === "semana") {
+  desde = obtenerLunesBogota(ahoraBogota);
 
-    hasta = new Date(desde);
-    hasta.setDate(desde.getDate() + 6);
-    hasta.setHours(23, 59, 59, 999);
-  }
+  hasta = new Date(desde);
+  hasta.setDate(desde.getDate() + 6);
+  hasta.setHours(23, 59, 59, 999);
+}
 
-  if (filtro === "semana_pasada") {
-    const dia = ahoraBogota.getDay() === 0 ? 6 : ahoraBogota.getDay() - 1;
-    desde = new Date(ahoraBogota);
-    desde.setDate(ahoraBogota.getDate() - dia - 7);
-    desde.setHours(0, 0, 0, 0);
+if (filtro === "semana_pasada") {
+  desde = obtenerLunesBogota(ahoraBogota);
+  desde.setDate(desde.getDate() - 7);
 
-    hasta = new Date(desde);
-    hasta.setDate(desde.getDate() + 6);
-    hasta.setHours(23, 59, 59, 999);
-  }
+  hasta = new Date(desde);
+  hasta.setDate(desde.getDate() + 6);
+  hasta.setHours(23, 59, 59, 999);
+}
+
 
   if (filtro === "mes") {
     desde = new Date(ahoraBogota.getFullYear(), ahoraBogota.getMonth(), 1, 0, 0, 0);
